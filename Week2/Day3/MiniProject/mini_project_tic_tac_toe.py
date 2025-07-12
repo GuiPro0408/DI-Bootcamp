@@ -49,6 +49,20 @@ def player_input(board):
 
 # Function to check if a player has won
 def check_win(board, player):
+    """
+    Checks if a player has won the game by achieving a winning combination in
+    a Tic Tac Toe board. The board is checked for all possible row, column,
+    and diagonal win conditions.
+
+    :param board: A 2D list representing the current state of the Tic Tac Toe board.
+    :type board: list[list]
+    :param player: The identifier for the player to check for a win condition. It
+                   represents the player's token (e.g., 'X', 'O').
+    :type player: str
+    :return: A boolean indicating whether the specified player has a winning
+             combination on the board.
+    :rtype: bool
+    """
     win_states = [
         # Rows
         [board[0][0], board[0][1], board[0][2]],
@@ -61,7 +75,9 @@ def check_win(board, player):
         # Diags
         [board[0][0], board[1][1], board[2][2]],
         [board[0][2], board[1][1], board[2][0]],
-    ]
+    ]  # Define all possible winning states
+
+    # Check if the player has any winning combination
     return [player] * 3 in win_states
 
 
@@ -73,9 +89,12 @@ def board_full(board):
 # Main function to play the Tic Tac Toe game
 def play():
     board = [
-        [' '] * 3 for _ in range(3)  # Initialize a 3x3 board with empty spaces
-    ]
-    current = 'X'
+        [' '] * 3 for _ in range(3)
+    ]  # Initialize a 3x3 board with empty spaces (e.g. [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']])
+
+    current = 'X'  # Start with Player X
+
+    # Main game loop
     while True:
         display_board(board)  # Display the current state of the board
 
