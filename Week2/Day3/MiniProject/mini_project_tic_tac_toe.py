@@ -78,6 +78,7 @@ def check_win(board, player):
     ]  # Define all possible winning states
 
     # Check if the player has any winning combination
+    # e.g. ['X', 'X', 'X'] or ['O', 'O', 'O'] in the win_states
     return [player] * 3 in win_states
 
 
