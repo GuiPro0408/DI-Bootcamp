@@ -84,7 +84,7 @@ def check_win(board, player):
 
 # Function to check if the board is full (no empty spaces)
 def board_full(board):
-    # all() checks if all cells by iterating through each row and cell are not empty (i.e., not ' ')
+    # all() checks if all cells in the board are not empty (' ')
     return all(
         cell != ' '
         for row in board # returns each row (e.g. [' ', ' ', ' '])
