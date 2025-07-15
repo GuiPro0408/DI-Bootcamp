@@ -309,7 +309,10 @@ class Zoo:
             self.animals.remove(animal_sold)
 
     def sort_animals(self):
-        """Sort animals alphabetically and group them by their first letter."""
+        """
+        Sort the animals alphabetically and group them by the first letter of their name.
+        :return: A dictionary where each key is a letter and each value is a list of animals that start with that letter.
+        """
         grouped_animals = {}
 
         for animal in sorted(self.animals):
