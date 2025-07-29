@@ -1,4 +1,4 @@
-my_list = [2, 3, 1, 2, "four", 42, 1, 5, 3, "imanumber"]
+my_list = [2, 3, 1, 2, "four", '4', 42, 1, 5, 3, "imanumber"]
 
 
 # Sum of array
@@ -7,8 +7,9 @@ def sum_of_array(arr):
 
     for item in arr:
         try:
+            item = int(item)
             total += item
-        except TypeError as e:
+        except Exception as e:
             print(f"Skipping item '{item}': {e}")
 
     return total

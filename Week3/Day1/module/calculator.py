@@ -1,5 +1,6 @@
 from operators import add_operator, divide_operator
 
+
 # Usage example
 def calculate_sum(x, y):
     """
@@ -13,6 +14,7 @@ def calculate_sum(x, y):
     int, float: The sum of x and y.
     """
     return add_operator(x, y)
+
 
 def calculate_division(x, y):
     """
@@ -30,6 +32,7 @@ def calculate_division(x, y):
     """
     return divide_operator(x, y)
 
+
 print(calculate_sum(1, 2))
 print(calculate_division(10, 2))
 
@@ -37,9 +40,12 @@ print(calculate_division(10, 2))
 if __name__ == "__main__":
     x = 10
     y = 5
+    z = 0
+
     print(f"Sum of {x} and {y} is: {calculate_sum(x, y)}")
+
     try:
         print(f"Division of {x} by {y} is: {calculate_division(x, y)}")
+        print(f"Division of {x} by {z} is: {calculate_division(x, z)}")
     except ZeroDivisionError as e:
         print(e)
-

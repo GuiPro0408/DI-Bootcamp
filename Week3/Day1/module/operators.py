@@ -27,5 +27,5 @@ def divide_operator(x, y):
     ZeroDivisionError: If y is zero.
     """
     if y == 0:
-        raise ZeroDivisionError("Cannot divide by zero.")
+        raise ZeroDivisionError(f"Division by zero is not allowed. Attempted to divide {x} by {y}.")
     return x / y
