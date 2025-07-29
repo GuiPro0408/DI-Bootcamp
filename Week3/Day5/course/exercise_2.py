@@ -1,3 +1,9 @@
+"""
+# Exercise 2: JSON File Operations with Error Handling
+This script demonstrates how to write a dictionary to a JSON file in a pretty format,
+read it back, and handle potential errors such as file not found, invalid JSON, and write errors.
+"""
+
 import json
 import os
 from typing import Dict, Any
