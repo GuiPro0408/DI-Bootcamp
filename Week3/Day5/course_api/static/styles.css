@@ -103,7 +103,7 @@
 }
 
 body {
-    font-family: var(--font-family);
+    font-family: var(--font-family), sans-serif;
     background: var(--primary-gradient);
     min-height: 100vh;
     color: var(--text-primary);
@@ -334,7 +334,7 @@ button {
 }
 
 .joke-id {
-    font-family: var(--font-monospace);
+    font-family: var(--font-monospace), monospace;
     background: var(--background-gray);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--radius-sm);
