@@ -6,10 +6,17 @@ from chuck_norris_api import ChuckNorrisClient
 # Get the directory where this script is located
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
+# Create a Flask application instance
+app = Flask(
+    __name__,
+    template_folder=os.path.join(basedir, 'templates')
+)
+
+# Initialize the ChuckNorrisClient
 client = ChuckNorrisClient()
 
 
+## Define routes for the Flask application
 @app.route('/')
 def index():
     """Serve the main HTML page."""
