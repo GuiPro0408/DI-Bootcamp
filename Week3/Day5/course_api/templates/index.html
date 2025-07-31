@@ -7,70 +7,70 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>🥋 Chuck Norris Jokes</h1>
-            <p>The ultimate collection of legendary Chuck Norris facts</p>
+<div class="container">
+    <header class="header">
+        <h1>🥋 Chuck Norris Jokes</h1>
+        <p>The ultimate collection of legendary Chuck Norris facts</p>
 
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalJokes">0</span>
-                    <span class="stat-label">Jokes Fetched</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="avgTime">0ms</span>
-                    <span class="stat-label">Avg Response Time</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="categories">0</span>
-                    <span class="stat-label">Categories Available</span>
-                </div>
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalJokes">0</span>
+                <span class="stat-label">Jokes Fetched</span>
             </div>
-        </header>
-
-        <div class="control-panel">
-            <div class="control-row">
-                <div class="control-group">
-                    <label for="categorySelect">Choose Category:</label>
-                    <select id="categorySelect">
-                        <option value="">Random (All Categories)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <button id="getJokeBtn">Get Random Joke</button>
-                </div>
+            <div class="stat-item">
+                <span class="stat-number" id="avgTime">0ms</span>
+                <span class="stat-label">Avg Response Time</span>
             </div>
+            <div class="stat-item">
+                <span class="stat-number" id="categories">0</span>
+                <span class="stat-label">Categories Available</span>
+            </div>
+        </div>
+    </header>
 
-            <div class="control-row">
-                <div class="control-group">
-                    <label for="searchInput">Search Jokes:</label>
-                    <input type="text" id="searchInput" placeholder="Enter search term...">
-                </div>
-                <div class="control-group">
-                    <button id="searchBtn">Search</button>
-                </div>
+    <div class="control-panel">
+        <div class="control-row">
+            <div class="control-group">
+                <label for="categorySelect">Choose Category:</label>
+                <select id="categorySelect">
+                    <option value="">Random (All Categories)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button id="getJokeBtn">Get Random Joke</button>
             </div>
         </div>
 
-        <div id="errorDisplay" class="error hidden"></div>
-
-        <div class="joke-display" id="jokeDisplay">
-            <div class="joke-text" id="jokeText">
-                Click "Get Random Joke" to start exploring Chuck Norris facts! 🚀
+        <div class="control-row">
+            <div class="control-group">
+                <label for="searchInput">Search Jokes:</label>
+                <input type="text" id="searchInput" placeholder="Enter search term...">
             </div>
-            <div class="joke-meta hidden" id="jokeMeta">
-                <span>ID: <span class="joke-id" id="jokeId"></span></span>
-                <span>Response Time: <span id="responseTime"></span>ms</span>
-                <span>Category: <span id="jokeCategory"></span></span>
+            <div class="control-group">
+                <button id="searchBtn">Search</button>
             </div>
-        </div>
-
-        <div class="search-results hidden" id="searchResults">
-            <h3>Search Results</h3>
-            <div id="resultsContainer"></div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <div id="errorDisplay" class="error hidden"></div>
+
+    <div class="joke-display" id="jokeDisplay">
+        <div class="joke-text" id="jokeText">
+            Click "Get Random Joke" to start exploring Chuck Norris facts! 🚀
+        </div>
+        <div class="joke-meta hidden" id="jokeMeta">
+            <span>ID: <span class="joke-id" id="jokeId"></span></span>
+            <span>Response Time: <span id="responseTime"></span>ms</span>
+            <span>Category: <span id="jokeCategory"></span></span>
+        </div>
+    </div>
+
+    <div class="search-results hidden" id="searchResults">
+        <h3>Search Results</h3>
+        <div id="resultsContainer"></div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

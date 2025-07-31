@@ -1,8 +1,12 @@
 from flask import Flask, render_template, jsonify, request
-from chuck_norris_api import ChuckNorrisClient
-import json
+import os
 
-app = Flask(__name__)
+from chuck_norris_api import ChuckNorrisClient
+
+# Get the directory where this script is located
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
 client = ChuckNorrisClient()
 
 
