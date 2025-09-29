@@ -19,6 +19,20 @@ model tuning, evaluation, and optional model comparisons — all in a single, re
 - **Optional bonus**: Compare SVM, KNN, Decision Tree, Random Forest, and Gradient Boosting models with the same
   preprocessing pipeline.
 
+## Project Structure
+
+```
+Week10/Day3/miniproject/
+├── heart_disease_uci.csv          # Source dataset
+├── config.py                      # Shared configuration constants
+├── data_io.py                     # File-system and JSON helpers
+├── preprocessing.py               # Data loading, cleaning, and imputation
+├── modeling.py                    # Preprocessing pipeline, training, evaluation, bonus models
+├── eda.py                         # Plotting and categorical cross-tab utilities
+├── predicting_heart_disease.py    # Orchestrator CLI tying all components together
+└── README.md
+```
+
 ## Usage
 
 Run the main script to train the logistic regression model and generate EDA artifacts:
