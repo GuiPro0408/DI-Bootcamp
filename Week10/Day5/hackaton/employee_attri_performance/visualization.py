@@ -6,12 +6,8 @@ import pandas as pd
 from matplotlib.figure import Figure
 from typing import Any, Callable, Sequence, cast
 
-try:  # pragma: no cover
-    from .config import FIGURES_DIR, INTERACTIVE_DIR
-    from .models import PreprocessingArtifacts
-except ImportError:  # pragma: no cover
-    from config import FIGURES_DIR, INTERACTIVE_DIR
-    from models import PreprocessingArtifacts
+from .config import FIGURES_DIR, INTERACTIVE_DIR
+from .models import PreprocessingArtifacts
 
 try:  # Optional dependency
     import seaborn as sns
@@ -207,14 +203,14 @@ def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts, l
         plotnine_labs = cast(Callable[..., Any], labs)
 
         plotnine_plot = (
-            plotnine_ggplot(attrition_department, plotnine_aes("Department", "AttritionFlag"))
-            + plotnine_geom_col(fill="#17a2b8")
-            + plotnine_theme_minimal()
-            + plotnine_labs(
-                title="Attrition Rate by Department (Plotnine)",
-                x="Department",
-                y="Attrition Rate (%)",
-            )
+                plotnine_ggplot(attrition_department, plotnine_aes("Department", "AttritionFlag"))
+                + plotnine_geom_col(fill="#17a2b8")
+                + plotnine_theme_minimal()
+                + plotnine_labs(
+            title="Attrition Rate by Department (Plotnine)",
+            x="Department",
+            y="Attrition Rate (%)",
+        )
         )
         plotnine_path = FIGURES_DIR / "plotnine_attrition_department.png"
         plotnine_plot.save(filename=str(plotnine_path), width=8, height=4, dpi=300)

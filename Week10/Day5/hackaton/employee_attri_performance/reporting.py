@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-try:  # pragma: no cover
-    from .config import REPORTS_DIR
-except ImportError:  # pragma: no cover
-    from config import REPORTS_DIR
+from .config import REPORTS_DIR
 
 
 def generate_retention_recommendations(df, logger) -> None:

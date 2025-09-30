@@ -5,10 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-try:  # pragma: no cover
-    from .config import DATA_PATH, DIRECTORIES, METADATA_DIR
-except ImportError:  # pragma: no cover
-    from config import DATA_PATH, DIRECTORIES, METADATA_DIR
+from .config import DATA_PATH, DIRECTORIES, METADATA_DIR
 
 
 def prepare_output_structure(logger) -> None:

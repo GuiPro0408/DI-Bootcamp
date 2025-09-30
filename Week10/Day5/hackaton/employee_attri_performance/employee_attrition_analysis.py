@@ -5,10 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-try:  # pragma: no cover - allow execution both as module and script
-    from .pipeline import run_pipeline
-except ImportError:  # pragma: no cover
-    from pipeline import run_pipeline  # type: ignore
+from .pipeline import run_pipeline
 
 
 def main(dataset: str | None = None) -> None:

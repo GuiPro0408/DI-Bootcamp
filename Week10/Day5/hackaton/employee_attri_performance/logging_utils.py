@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import logging
 
-try:  # pragma: no cover
-    from .config import LOG_DIR, LOGGER_NAME
-except ImportError:  # pragma: no cover
-    from config import LOG_DIR, LOGGER_NAME
+from .config import LOG_DIR, LOGGER_NAME
 
 
 def configure_logging(name: str = LOGGER_NAME) -> logging.Logger:
