@@ -4,6 +4,7 @@ This folder contains a ready-to-run analytics pipeline for the IBM HR Analytics
 Employee Attrition dataset used in Hackathon Subject 3.
 
 ## Prerequisites
+
 - Python 3.10+
 - Required packages: pandas, numpy, matplotlib
 - Optional (enables richer outputs): seaborn, scipy, plotly, plotnine
@@ -15,25 +16,34 @@ python -m pip install pandas numpy matplotlib seaborn scipy plotly plotnine
 ```
 
 ## How to Run
+
 ```bash
 python employee_attrition_analysis.py
 ```
+
 The script loads `WA_Fn-UseC_-HR-Employee-Attrition.csv`, performs cleaning,
-EDA, feature scaling (standardization + min-max normalization), categorical
-encoding, correlation analysis, and generates visuals + summary artifacts.
+EDA, feature scaling, categorical encoding, correlation analysis, and generates
+visuals + summary artifacts. A detailed execution log is streamed to the console
+and stored at `outputs/logs/pipeline.log` for traceability.
 
-## Generated Outputs
-All outputs are written to the `outputs/` folder:
-- `numeric_summary.csv`, `categorical_summary.csv`, `attrition_distribution.csv`
-- `numeric_standardized.csv`, `numeric_normalized.csv`, `categorical_encoded.csv`
-- `model_ready_features.csv` for downstream modelling
-- Aggregated insights such as `attrition_rate_by_jobrole.csv`
-- Visualization files (PNG) covering attrition distributions, heatmaps, etc.
-- `retention_recommendations.txt` summarising actionable takeaways
-- (Optional) `plotly_attrition_age.html`, `plotnine_*.png` when the respective
-  libraries are installed
+## Output Structure
 
-## Next Steps
-1. Review `retention_recommendations.txt` to shape your hackathon storyline.
-2. Pull CSV summaries/visuals into Tableau or PowerBI for dashboarding.
-3. Optionally extend the script with predictive modelling or interactive apps.
+All deliverables are written to the `outputs/` directory, organised as follows:
+
+- `summaries/` – numeric & categorical descriptive statistics, attrition counts, quick facts
+- `preprocessing/` – standardized & min–max scaled numerics, encoded categoricals, model-ready matrix
+- `statistics/` – Spearman correlations, chi-square results, residual diagnostics
+- `tables/` – aggregated EDA tables for Tableau/PowerBI (job role, department, education, distance)
+- `figures/` – PNG visualisations generated with Matplotlib/Seaborn fallbacks (+ Plotnine when available)
+- `interactive/` – Plotly HTML dashboards (created when Plotly is installed)
+- `reports/` – narrative recommendations and takeaway summaries
+- `metadata/` – dataset cleaning metadata
+- `logs/` – execution log file capturing the pipeline flow and warnings
+
+## Recommended Next Steps
+
+1. Review `reports/retention_recommendations.txt` alongside the log file for a
+   guided storyline.
+2. Import CSV tables or PNGs into Tableau/PowerBI to craft the final dashboard.
+3. Extend the pipeline with predictive modelling or interactive front-ends if
+   you need additional hackathon features.

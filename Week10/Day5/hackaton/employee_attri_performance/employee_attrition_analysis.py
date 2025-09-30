@@ -4,12 +4,12 @@ This script loads the IBM HR Analytics Employee Attrition dataset, performs
 cleaning, preprocessing, exploratory data analysis (EDA), correlation studies,
 statistical testing, and generates a collection of visual assets and summary
 artifacts. It is designed to be run as a standalone tool for the hackathon
-requirements.
-"""
+requirements."""
 
 from __future__ import annotations
 
 import json
+import logging
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,6 +54,30 @@ except ImportError:  # pragma: no cover - optional dependency
 
 DATA_PATH = Path(__file__).resolve().parent / "WA_Fn-UseC_-HR-Employee-Attrition.csv"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
+SUMMARIES_DIR = OUTPUT_DIR / "summaries"
+PREPROCESSING_DIR = OUTPUT_DIR / "preprocessing"
+STATISTICS_DIR = OUTPUT_DIR / "statistics"
+TABLES_DIR = OUTPUT_DIR / "tables"
+FIGURES_DIR = OUTPUT_DIR / "figures"
+INTERACTIVE_DIR = OUTPUT_DIR / "interactive"
+REPORTS_DIR = OUTPUT_DIR / "reports"
+METADATA_DIR = OUTPUT_DIR / "metadata"
+LOG_DIR = OUTPUT_DIR / "logs"
+RESIDUALS_DIR = STATISTICS_DIR / "chi_square_residuals"
+
+DIRECTORIES = [
+    OUTPUT_DIR,
+    SUMMARIES_DIR,
+    PREPROCESSING_DIR,
+    STATISTICS_DIR,
+    TABLES_DIR,
+    FIGURES_DIR,
+    INTERACTIVE_DIR,
+    REPORTS_DIR,
+    METADATA_DIR,
+    LOG_DIR,
+    RESIDUALS_DIR,
+]
 
 
 @dataclass
@@ -65,23 +89,55 @@ class PreprocessingArtifacts:
     encoded_frame: pd.DataFrame
 
 
-def load_data(path: Path) -> pd.DataFrame:
+def configure_logging() -> logging.Logger:
+    """Configure file and console logging for the pipeline."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_file = LOG_DIR / "pipeline.log"
+    logger = logging.getLogger("employee_attrition_pipeline")
+    logger.setLevel(logging.INFO)
+
+    if not logger.handlers:
+        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+    return logger
+
+
+def prepare_output_structure(logger: logging.Logger) -> None:
+    """Create the nested output directory tree."""
+    for directory in DIRECTORIES:
+        directory.mkdir(parents=True, exist_ok=True)
+        logger.debug("Ensured directory exists: %s", directory)
+
+
+def load_data(path: Path, logger: logging.Logger) -> pd.DataFrame:
     """Load the dataset from disk and return a DataFrame."""
+    logger.info("Loading dataset from %s", path)
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found at {path}")
 
     df = pd.read_csv(path)
+    logger.info("Dataset loaded with shape %s", df.shape)
     return df
 
 
-def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """Basic data cleaning: drop duplicates and constant columns."""
+    logger.info("Cleaning dataset: removing duplicates and constant columns")
     before = len(df)
     df = df.drop_duplicates()
     after = len(df)
 
     constant_columns = [col for col in df.columns if df[col].nunique(dropna=False) <= 1]
     if constant_columns:
+        logger.info("Dropping constant columns: %s", constant_columns)
         df = df.drop(columns=constant_columns)
 
     df["AttritionFlag"] = df["Attrition"].map({"Yes": 1, "No": 0})
@@ -92,35 +148,49 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         "rows_removed": before - after,
         "constant_columns_removed": constant_columns,
     }
-    (OUTPUT_DIR / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    metadata_path = METADATA_DIR / "metadata.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    logger.info("Wrote cleaning metadata to %s", metadata_path)
 
     return df
 
 
-def summarize_dataset(df: pd.DataFrame) -> None:
+def summarize_dataset(df: pd.DataFrame, logger: logging.Logger) -> None:
     """Persist high-level dataset summaries to the outputs folder."""
+    logger.info("Generating dataset summaries")
     numeric_summary = df.describe().transpose()
     categorical_summary = df.select_dtypes(include="object").describe().transpose()
     attrition_counts = df["Attrition"].value_counts().rename_axis("Attrition").to_frame("Count")
     attrition_rate = df["Attrition"].value_counts(normalize=True).mul(100).round(2)
 
-    numeric_summary.to_csv(OUTPUT_DIR / "numeric_summary.csv")
-    categorical_summary.to_csv(OUTPUT_DIR / "categorical_summary.csv")
-    attrition_counts.to_csv(OUTPUT_DIR / "attrition_distribution.csv")
+    numeric_path = SUMMARIES_DIR / "numeric_summary.csv"
+    categorical_path = SUMMARIES_DIR / "categorical_summary.csv"
+    distribution_path = SUMMARIES_DIR / "attrition_distribution.csv"
 
-    with (OUTPUT_DIR / "quick_facts.txt").open("w", encoding="utf-8") as handle:
-        handle.write(
-            dedent(
-                f"""
-                Dataset shape: {df.shape[0]} rows x {df.shape[1]} columns
-                Overall attrition rate: {attrition_rate.get('Yes', 0):.2f}%
-                """
-            ).strip()
-        )
+    numeric_summary.to_csv(numeric_path)
+    categorical_summary.to_csv(categorical_path)
+    attrition_counts.to_csv(distribution_path)
+
+    logger.info("Saved numeric summary to %s", numeric_path)
+    logger.info("Saved categorical summary to %s", categorical_path)
+    logger.info("Saved attrition distribution to %s", distribution_path)
+
+    quick_facts_path = SUMMARIES_DIR / "quick_facts.txt"
+    quick_facts_path.write_text(
+        dedent(
+            f"""
+            Dataset shape: {df.shape[0]} rows x {df.shape[1]} columns
+            Overall attrition rate: {attrition_rate.get('Yes', 0):.2f}%
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    logger.info("Wrote quick facts to %s", quick_facts_path)
 
 
-def preprocess_features(df: pd.DataFrame) -> PreprocessingArtifacts:
+def preprocess_features(df: pd.DataFrame, logger: logging.Logger) -> PreprocessingArtifacts:
     """Generate standardized, normalized, and encoded feature sets."""
+    logger.info("Preprocessing numeric and categorical features")
     numeric_columns = [col for col in df.select_dtypes(include=[np.number]).columns if col != "AttritionFlag"]
     categorical_columns = [col for col in df.select_dtypes(include="object").columns if col != "Attrition"]
 
@@ -133,12 +203,26 @@ def preprocess_features(df: pd.DataFrame) -> PreprocessingArtifacts:
 
     encoded = pd.get_dummies(df[categorical_columns], drop_first=True)
 
-    standardized.to_csv(OUTPUT_DIR / "numeric_standardized.csv", index=False)
-    normalized.to_csv(OUTPUT_DIR / "numeric_normalized.csv", index=False)
-    encoded.to_csv(OUTPUT_DIR / "categorical_encoded.csv", index=False)
+    standardized_path = PREPROCESSING_DIR / "numeric_standardized.csv"
+    normalized_path = PREPROCESSING_DIR / "numeric_normalized.csv"
+    encoded_path = PREPROCESSING_DIR / "categorical_encoded.csv"
 
-    model_ready = pd.concat([standardized, encoded, df[["AttritionFlag"]].reset_index(drop=True)], axis=1)
-    model_ready.to_csv(OUTPUT_DIR / "model_ready_features.csv", index=False)
+    standardized.to_csv(standardized_path, index=False)
+    normalized.to_csv(normalized_path, index=False)
+    encoded.to_csv(encoded_path, index=False)
+
+    logger.info("Saved standardized numerics to %s", standardized_path)
+    logger.info("Saved normalized numerics to %s", normalized_path)
+    logger.info("Saved encoded categoricals to %s", encoded_path)
+
+    model_ready = pd.concat([
+        standardized,
+        encoded,
+        df[["AttritionFlag"]].reset_index(drop=True),
+    ], axis=1)
+    model_ready_path = PREPROCESSING_DIR / "model_ready_features.csv"
+    model_ready.to_csv(model_ready_path, index=False)
+    logger.info("Saved model-ready feature matrix to %s", model_ready_path)
 
     return PreprocessingArtifacts(
         numeric_columns=numeric_columns,
@@ -149,13 +233,13 @@ def preprocess_features(df: pd.DataFrame) -> PreprocessingArtifacts:
     )
 
 
-def statistical_tests(df: pd.DataFrame) -> None:
+def statistical_tests(df: pd.DataFrame, logger: logging.Logger) -> None:
     """Run chi-square tests on selected categorical variables against attrition."""
+    logger.info("Running chi-square tests on key categorical features")
     if not HAS_SCIPY:
-        (OUTPUT_DIR / "chi_square_results.txt").write_text(
-            "SciPy not installed. Install scipy to run chi-square tests.",
-            encoding="utf-8",
-        )
+        message = "SciPy not installed. Install scipy to run chi-square tests."
+        (STATISTICS_DIR / "chi_square_results.txt").write_text(message, encoding="utf-8")
+        logger.warning(message)
         return
 
     tests = []
@@ -176,22 +260,32 @@ def statistical_tests(df: pd.DataFrame) -> None:
 
         expected_df = pd.DataFrame(expected, index=contingency.index, columns=contingency.columns)
         residuals = (contingency - expected_df) / np.sqrt(expected_df)
-        residuals.to_csv(OUTPUT_DIR / f"chi_square_standardized_residuals_{column}.csv")
+        residual_path = RESIDUALS_DIR / f"chi_square_standardized_residuals_{column}.csv"
+        residuals.to_csv(residual_path)
+        logger.info("Saved chi-square residuals for %s to %s", column, residual_path)
 
-    pd.DataFrame(tests).to_csv(OUTPUT_DIR / "chi_square_results.csv", index=False)
+    results_path = STATISTICS_DIR / "chi_square_results.csv"
+    pd.DataFrame(tests).to_csv(results_path, index=False)
+    logger.info("Saved chi-square results to %s", results_path)
 
 
-def correlation_studies(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -> None:
+def correlation_studies(df: pd.DataFrame, artifacts: PreprocessingArtifacts, logger: logging.Logger) -> None:
     """Compute correlation matrices and export to disk."""
+    logger.info("Calculating Spearman correlations")
     corr_numeric = df[artifacts.numeric_columns + ["AttritionFlag"]].corr(method="spearman")
-    corr_numeric.to_csv(OUTPUT_DIR / "spearman_correlations.csv")
+    corr_path = STATISTICS_DIR / "spearman_correlations.csv"
+    corr_numeric.to_csv(corr_path)
+    logger.info("Saved full Spearman correlation matrix to %s", corr_path)
 
     attrition_corr = corr_numeric["AttritionFlag"].sort_values(ascending=False)
-    attrition_corr.to_csv(OUTPUT_DIR / "attrition_numeric_correlations.csv")
+    attrition_corr_path = STATISTICS_DIR / "attrition_numeric_correlations.csv"
+    attrition_corr.to_csv(attrition_corr_path)
+    logger.info("Saved attrition correlations to %s", attrition_corr_path)
 
 
-def build_eda_tables(df: pd.DataFrame) -> None:
+def build_eda_tables(df: pd.DataFrame, logger: logging.Logger) -> None:
     """Create aggregated tables that are useful for analysis and dashboards."""
+    logger.info("Building aggregated EDA tables")
     df = df.copy()
     df["AttritionRate"] = df["AttritionFlag"]
 
@@ -211,10 +305,20 @@ def build_eda_tables(df: pd.DataFrame) -> None:
         aggfunc="mean",
     )
 
-    attrition_by_jobrole.to_csv(OUTPUT_DIR / "attrition_rate_by_jobrole.csv", index=False)
-    attrition_by_department.to_csv(OUTPUT_DIR / "attrition_rate_by_department.csv", index=False)
-    avg_income_by_education.to_csv(OUTPUT_DIR / "monthly_income_by_education_attrition.csv", index=False)
-    distance_vs_jobrole.to_csv(OUTPUT_DIR / "distance_from_home_by_jobrole_attrition.csv")
+    jobrole_path = TABLES_DIR / "attrition_rate_by_jobrole.csv"
+    department_path = TABLES_DIR / "attrition_rate_by_department.csv"
+    income_path = TABLES_DIR / "monthly_income_by_education_attrition.csv"
+    distance_path = TABLES_DIR / "distance_from_home_by_jobrole_attrition.csv"
+
+    attrition_by_jobrole.to_csv(jobrole_path, index=False)
+    attrition_by_department.to_csv(department_path, index=False)
+    avg_income_by_education.to_csv(income_path, index=False)
+    distance_vs_jobrole.to_csv(distance_path)
+
+    logger.info("Saved attrition by job role table to %s", jobrole_path)
+    logger.info("Saved attrition by department table to %s", department_path)
+    logger.info("Saved income by education table to %s", income_path)
+    logger.info("Saved distance from home table to %s", distance_path)
 
 
 def _bar_with_optional_seaborn(ax, data, x, y=None, hue=None, **kwargs) -> None:
@@ -223,29 +327,31 @@ def _bar_with_optional_seaborn(ax, data, x, y=None, hue=None, **kwargs) -> None:
     else:
         if hue:
             categories = sorted(data[hue].unique())
-            base_positions = np.arange(data[x].nunique())
-            offsets = np.linspace(-0.2, 0.2, len(categories))
+            positions = np.arange(data[x].nunique())
+            width = 0.8 / max(len(categories), 1)
             colors = plt.cm.get_cmap("tab10", len(categories))
             for idx, category in enumerate(categories):
-                mask = data[hue] == category
-                grouped = data[mask].groupby(x)[y].sum()
-                positions = np.arange(len(grouped)) + offsets[idx]
-                ax.bar(positions, grouped.values, width=0.4 / len(categories), color=colors(idx), label=category)
-                ax.set_xticks(np.arange(len(grouped)))
-                ax.set_xticklabels(grouped.index, rotation=30, ha="right")
+                subset = data[data[hue] == category]
+                grouped = subset.groupby(x)[y].sum()
+                offset_positions = positions[: len(grouped)] + (idx - (len(categories) - 1) / 2) * width
+                ax.bar(offset_positions, grouped.values, width=width, color=colors(idx), label=str(category), alpha=0.8)
+            ax.set_xticks(positions)
+            ax.set_xticklabels(sorted(data[x].unique()), rotation=30, ha="right")
             ax.legend(title=hue)
         else:
             ax.bar(data[x], data[y], color="#4c72b0")
 
 
-def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -> None:
+def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts, logger: logging.Logger) -> None:
     """Generate Matplotlib/Seaborn, Plotly, and Plotnine visualizations."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info("Creating visualization assets")
 
     def save_fig(name: str, fig: plt.Figure) -> None:
         fig.tight_layout()
-        fig.savefig(OUTPUT_DIR / name, dpi=300, bbox_inches="tight")
+        fig_path = FIGURES_DIR / name
+        fig.savefig(fig_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
+        logger.info("Saved figure to %s", fig_path)
 
     fig, ax = plt.subplots(figsize=(6, 4))
     if HAS_SEABORN:
@@ -265,10 +371,7 @@ def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -
         sns.barplot(data=attrition_by_dept, x="Department", y="Count", hue="Attrition", ax=ax)
         ax.tick_params(axis="x", rotation=30)
     else:
-        for attr_value, subset in attrition_by_dept.groupby("Attrition"):
-            ax.bar(subset["Department"], subset["Count"], label=attr_value, alpha=0.7)
-        ax.tick_params(axis="x", rotation=30)
-        ax.legend(title="Attrition")
+        _bar_with_optional_seaborn(ax, attrition_by_dept, x="Department", y="Count", hue="Attrition")
     ax.set_title("Attrition by Department")
     ax.set_xlabel("")
     save_fig("attrition_by_department.png", fig)
@@ -291,7 +394,7 @@ def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -
         sns.boxplot(data=df, x="Attrition", y="MonthlyIncome", ax=ax)
     else:
         data_groups = [df.loc[df["Attrition"] == label, "MonthlyIncome"].values for label in ["No", "Yes"]]
-        ax.boxplot(data_groups, labels=["No", "Yes"], patch_artist=True)
+        ax.boxplot(data_groups, tick_labels=["No", "Yes"], patch_artist=True)
     ax.set_title("Monthly Income by Attrition Status")
     ax.set_ylabel("Monthly Income")
     save_fig("monthly_income_attrition_boxplot.png", fig)
@@ -366,7 +469,9 @@ def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -
             title="Attrition Distribution by Age",
         )
         plotly_fig.update_layout(template="plotly_white")
-        plotly_fig.write_html(OUTPUT_DIR / "plotly_attrition_age.html", include_plotlyjs="cdn")
+        plotly_path = INTERACTIVE_DIR / "plotly_attrition_age.html"
+        plotly_fig.write_html(plotly_path, include_plotlyjs="cdn")
+        logger.info("Saved Plotly histogram to %s", plotly_path)
 
     if HAS_PLOTNINE:
         attrition_department = (
@@ -382,11 +487,14 @@ def create_visualizations(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -
             y="Attrition Rate (%)",
         )
         )
-        plotnine_plot.save(filename=str(OUTPUT_DIR / "plotnine_attrition_department.png"), width=8, height=4, dpi=300)
+        plotnine_path = FIGURES_DIR / "plotnine_attrition_department.png"
+        plotnine_plot.save(filename=str(plotnine_path), width=8, height=4, dpi=300)
+        logger.info("Saved Plotnine visualization to %s", plotnine_path)
 
 
-def generate_retention_recommendations(df: pd.DataFrame) -> None:
+def generate_retention_recommendations(df: pd.DataFrame, logger: logging.Logger) -> None:
     """Create a simple text report with actionable insights."""
+    logger.info("Compiling retention recommendations")
     attrition_rate = df["AttritionFlag"].mean() * 100
     overtime = df.groupby("OverTime")["AttritionFlag"].mean().mul(100)
     job_role = df.groupby("JobRole")["AttritionFlag"].mean().mul(100).sort_values(ascending=False)
@@ -434,31 +542,36 @@ def generate_retention_recommendations(df: pd.DataFrame) -> None:
         "4. Launch quarterly pulse surveys aligned with job satisfaction drivers to capture qualitative feedback."
     )
 
-    (OUTPUT_DIR / "retention_recommendations.txt").write_text("\n".join(lines), encoding="utf-8")
+    recommendations_path = REPORTS_DIR / "retention_recommendations.txt"
+    recommendations_path.write_text("\n".join(lines), encoding="utf-8")
+    logger.info("Saved retention recommendations to %s", recommendations_path)
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    logger = configure_logging()
+    prepare_output_structure(logger)
 
-    df = load_data(DATA_PATH)
-    clean_df = clean_data(df)
-    summarize_dataset(clean_df)
-    artifacts = preprocess_features(clean_df)
-    statistical_tests(clean_df)
-    correlation_studies(clean_df, artifacts)
-    build_eda_tables(clean_df)
-    create_visualizations(clean_df, artifacts)
-    generate_retention_recommendations(clean_df)
+    logger.info("Starting employee attrition analysis pipeline")
+    df = load_data(DATA_PATH, logger)
+    clean_df = clean_data(df, logger)
+    summarize_dataset(clean_df, logger)
+    artifacts = preprocess_features(clean_df, logger)
+    statistical_tests(clean_df, logger)
+    correlation_studies(clean_df, artifacts, logger)
+    build_eda_tables(clean_df, logger)
+    create_visualizations(clean_df, artifacts, logger)
+    generate_retention_recommendations(clean_df, logger)
 
-    print(f"Analysis complete. Outputs available in: {OUTPUT_DIR}")
+    logger.info("Analysis complete. Outputs available in: %s", OUTPUT_DIR)
+
     if not HAS_SEABORN:
-        print("Seaborn not installed. Install seaborn for enhanced visual styling.")
+        logger.warning("Seaborn not installed. Install seaborn for enhanced visual styling.")
     if not HAS_SCIPY:
-        print("SciPy not installed. Chi-square tests were skipped.")
+        logger.warning("SciPy not installed. Chi-square tests were skipped.")
     if not HAS_PLOTLY:
-        print("Plotly not installed. Install plotly to generate interactive HTML charts.")
+        logger.warning("Plotly not installed. Install plotly to generate interactive HTML charts.")
     if not HAS_PLOTNINE:
-        print("Plotnine not installed. Install plotnine to export ggplot-style charts.")
+        logger.warning("Plotnine not installed. Install plotnine to export ggplot-style charts.")
 
 
 if __name__ == "__main__":
