@@ -6,8 +6,8 @@ import pandas as pd
 from matplotlib.figure import Figure
 from typing import Any, Callable, Sequence, cast
 
-from .config import FIGURES_DIR, INTERACTIVE_DIR
-from .models import PreprocessingArtifacts
+from config import FIGURES_DIR, INTERACTIVE_DIR
+from models import PreprocessingArtifacts
 
 try:  # Optional dependency
     import seaborn as sns

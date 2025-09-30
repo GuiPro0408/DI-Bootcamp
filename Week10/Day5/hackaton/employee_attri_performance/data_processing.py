@@ -5,9 +5,9 @@ from textwrap import dedent
 import numpy as np
 import pandas as pd
 
-from .config import PREPROCESSING_DIR, SUMMARIES_DIR
-from .io_utils import write_metadata
-from .models import PreprocessingArtifacts
+from config import PREPROCESSING_DIR, SUMMARIES_DIR
+from io_utils import write_metadata
+from models import PreprocessingArtifacts
 
 
 def clean_data(df: pd.DataFrame, logger) -> pd.DataFrame:

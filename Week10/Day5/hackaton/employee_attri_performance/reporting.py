@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .config import REPORTS_DIR
+from config import REPORTS_DIR
 
 
 def generate_retention_recommendations(df, logger) -> None:

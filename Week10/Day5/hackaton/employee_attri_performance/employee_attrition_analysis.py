@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from .pipeline import run_pipeline
+from pipeline import run_pipeline
 
 
 def main(dataset: str | None = None) -> None:

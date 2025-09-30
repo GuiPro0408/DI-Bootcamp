@@ -3,13 +3,13 @@ from __future__ import annotations
 import warnings
 from pathlib import Path
 
-from .analysis import HAS_SCIPY, build_eda_tables, correlation_studies, statistical_tests
-from .config import DATA_PATH, OUTPUT_DIR
-from .data_processing import clean_data, preprocess_features, summarize_dataset
-from .io_utils import load_data, prepare_output_structure
-from .logging_utils import configure_logging
-from .reporting import generate_retention_recommendations
-from .visualization import HAS_PLOTLY, HAS_PLOTNINE, HAS_SEABORN, create_visualizations
+from analysis import HAS_SCIPY, build_eda_tables, correlation_studies, statistical_tests
+from config import DATA_PATH, OUTPUT_DIR
+from data_processing import clean_data, preprocess_features, summarize_dataset
+from io_utils import load_data, prepare_output_structure
+from logging_utils import configure_logging
+from reporting import generate_retention_recommendations
+from visualization import HAS_PLOTLY, HAS_PLOTNINE, HAS_SEABORN, create_visualizations
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)

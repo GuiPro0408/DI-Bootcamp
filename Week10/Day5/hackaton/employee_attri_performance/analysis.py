@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from typing import Any, cast
 
-from .config import RESIDUALS_DIR, STATISTICS_DIR, TABLES_DIR
-from .models import PreprocessingArtifacts
+from config import RESIDUALS_DIR, STATISTICS_DIR, TABLES_DIR
+from models import PreprocessingArtifacts
 
 try:  # Optional dependency
     from scipy import stats
