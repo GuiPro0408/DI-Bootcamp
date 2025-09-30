@@ -17,11 +17,13 @@ def clean_data(df: pd.DataFrame, logger) -> pd.DataFrame:
     df = df.drop_duplicates()
     after = len(df)
 
+    # Retrieving columns with only one unique value
     constant_columns = [col for col in df.columns if df[col].nunique(dropna=False) <= 1]
     if constant_columns:
         logger.info("Dropping constant columns: %s", constant_columns)
         df = df.drop(columns=constant_columns)
 
+    # Map Attrition to binary (Yes = 1, No = 0)
     df["AttritionFlag"] = df["Attrition"].map({"Yes": 1, "No": 0})
 
     metadata = {

@@ -15,7 +15,9 @@ def prepare_output_structure(logger) -> None:
         logger.debug("Ensured directory exists: %s", directory)
 
 
-def load_data(path: Path = DATA_PATH, logger=None) -> pd.DataFrame:
+def load_data(
+        path: Path = DATA_PATH, logger=None
+) -> pd.DataFrame:
     """Load the dataset from disk and return a DataFrame."""
     if logger:
         logger.info("Loading dataset from %s", path)
@@ -28,7 +30,10 @@ def load_data(path: Path = DATA_PATH, logger=None) -> pd.DataFrame:
     return df
 
 
-def write_metadata(metadata: dict, filename: str, logger=None) -> None:
+def write_metadata(
+        metadata: dict, filename: str, logger=None
+) -> None:
+    """Write metadata dictionary to a JSON file in the metadata directory."""
     metadata_path = METADATA_DIR / filename
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     if logger:
