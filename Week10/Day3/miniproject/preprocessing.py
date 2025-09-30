@@ -8,6 +8,15 @@ import pandas as pd
 from data_io import load_csv
 
 
+def _log(step: str, **details: object) -> None:
+    """Emit a preprocessing-specific trace message."""
+    if details:
+        formatted = " | ".join(f"{k}={v}" for k, v in details.items())
+        print(f"[PRE] {step:<28} :: {formatted}")
+    else:
+        print(f"[PRE] {step}")
+
+
 def groupwise_impute(
         df: pd.DataFrame, group_cols: List[str], numeric_cols: List[str], categorical_cols: List[str]
 ) -> None:
@@ -29,6 +38,12 @@ def groupwise_impute(
 
     valid_group_cols = [c for c in group_cols if c in df.columns]
     grouped = df.groupby(valid_group_cols) if valid_group_cols else None
+    _log(
+        "Imputation setup",
+        groups=valid_group_cols or "none",
+        numeric=len(numeric_cols),
+        categorical=len(categorical_cols),
+    )
 
     def _fill_numeric(series: pd.Series) -> pd.Series:
         if series.isna().sum() == 0:
@@ -75,7 +90,12 @@ def groupwise_impute(
 
     remaining_cols = [c for c in dict.fromkeys(numeric_cols + categorical_cols) if c in df.columns]
     if remaining_cols:
+        before_drop = df[remaining_cols].isna().sum().sum()
         df.dropna(subset=remaining_cols, inplace=True)
+        after_drop = df[remaining_cols].isna().sum().sum()
+        _log("Rows dropped post-imputation", before=before_drop, after=after_drop, rows=len(df))
+    else:
+        _log("No monitored columns after imputation")
 
 
 def load_and_prepare(path: str) -> Tuple[pd.DataFrame, str, List[str], List[str]]:
@@ -88,18 +108,24 @@ def load_and_prepare(path: str) -> Tuple[pd.DataFrame, str, List[str], List[str]
         Cleaned dataframe, target column name, numeric feature names, and
         categorical feature names.
     """
+    _log("Loading dataset", path=path)
     df = load_csv(path)
+    _log("Raw shape", rows=df.shape[0], cols=df.shape[1])
 
     for c in ["slope", "ca", "thal"]:
         if c in df.columns:
             df.drop(columns=[c], inplace=True)
+            _log("Dropped column", column=c)
 
     na_pct = df.isna().mean() * 100
     high_na_cols = na_pct[na_pct > 30].index.tolist()
     df.drop(columns=high_na_cols, errors="ignore", inplace=True)
+    if high_na_cols:
+        _log("High-NA columns removed", columns=high_na_cols)
 
     if "id" in df.columns:
         df.drop(columns=["id"], inplace=True)
+        _log("Dropped column", column="id")
 
     if "num" in df.columns:
         df["target"] = (df["num"] > 0).astype(int)
@@ -114,6 +140,12 @@ def load_and_prepare(path: str) -> Tuple[pd.DataFrame, str, List[str], List[str]
     numeric_initial = [c for c in feature_cols if pd.api.types.is_numeric_dtype(df[c])]
     bool_cols = [c for c in numeric_initial if pd.api.types.is_bool_dtype(df[c])]
     categorical_initial = [c for c in feature_cols if c not in numeric_initial]
+    _log(
+        "Initial type split",
+        numeric=len(numeric_initial),
+        categorical=len(categorical_initial),
+        bool=len(bool_cols),
+    )
 
     group_cols = [c for c in ["dataset", "sex"] if c in df.columns]
     numeric_for_impute = [c for c in numeric_initial if c not in bool_cols]
@@ -126,4 +158,12 @@ def load_and_prepare(path: str) -> Tuple[pd.DataFrame, str, List[str], List[str]
     for c in categorical_cols:
         df[c] = df[c].astype("category")
 
+    _log(
+        "Prepared dataset",
+        rows=df.shape[0],
+        cols=len(feature_cols) + 1,
+        target=target,
+        numeric=len(numeric_cols),
+        categorical=len(categorical_cols),
+    )
     return df, target, numeric_cols, categorical_cols

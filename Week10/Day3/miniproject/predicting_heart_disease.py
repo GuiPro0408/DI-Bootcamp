@@ -38,19 +38,40 @@ from modeling import build_preprocessor, train_logreg_with_grid, evaluate, run_b
 from preprocessing import load_and_prepare
 
 
+def _log(step: str, **details: Any) -> None:
+    """Emit a structured progress message for the main pipeline."""
+    if details:
+        formatted = " | ".join(f"{key}={value}" for key, value in details.items())
+        print(f"[FLOW] {step:<28} :: {formatted}")
+    else:
+        print(f"[FLOW] {step}")
+
+
 def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     ensure_dir(args.out)
     warnings.filterwarnings("ignore")
 
+    _log("Pipeline initialised", data=args.data, out=args.out, bonus=args.bonus)
     df, target, numeric_cols, categorical_cols = load_and_prepare(args.data)
+    _log(
+        "Data prepared",
+        rows=df.shape[0],
+        cols=df.shape[1],
+        target=target,
+        numeric=len(numeric_cols),
+        categorical=len(categorical_cols),
+    )
     x = df[[c for c in df.columns if c != target]]
     y = df[target].values
 
     class_balance_path = plot_class_balance(y, os.path.join(args.out, "class_balance.png"))
+    _log("Class balance plot saved", path=class_balance_path)
     skewness = df[numeric_cols].skew(numeric_only=True).to_dict()
+    _log("Skewness computed", features=len(skewness))
 
     eda_dir = os.path.join(args.out, "eda")
     ensure_dir(eda_dir)
+    _log("Running EDA exports", directory=eda_dir)
     histogram_paths = plot_numeric_histograms(df, numeric_cols, eda_dir)
     boxplot_paths = plot_numeric_boxplots(df, numeric_cols, target, eda_dir)
     correlation_heatmap_path = plot_correlation_heatmap(
@@ -59,20 +80,44 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     crosstab_path = save_categorical_crosstabs(
         df, categorical_cols, target, os.path.join(eda_dir, "categorical_target_crosstabs.json")
     )
+    _log(
+        "EDA artifacts created",
+        hist=len(histogram_paths),
+        box=len(boxplot_paths),
+        heatmap=bool(correlation_heatmap_path),
+        crosstab=crosstab_path,
+    )
 
     pre = build_preprocessor(numeric_cols, categorical_cols)
+    _log("Preprocessor ready", numeric=len(numeric_cols), categorical=len(categorical_cols))
 
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
     )
+    _log(
+        "Dataset split",
+        train_samples=len(y_train),
+        test_samples=len(y_test),
+        test_ratio=0.2,
+    )
 
     grid = train_logreg_with_grid(x_train, y_train, pre)
     best = grid.best_estimator_
+    _log("LogReg tuning complete", best_score=round(grid.best_score_, 4))
+    _log("Best parameters", **grid.best_params_)
 
     metrics, cm = evaluate(best, x_test, y_test)
     confusion_matrix_path = plot_confusion_matrix(cm, os.path.join(args.out, "confusion_matrix_logreg.png"))
+    _log(
+        "Evaluation done",
+        accuracy=round(metrics["accuracy"], 4),
+        f1_pos=round(metrics["class1"]["f1"], 4),
+        confusion_plot=confusion_matrix_path,
+    )
 
     bonus = run_bonus_suite(x_train, x_test, y_train, y_test, pre) if args.bonus else {}
+    if bonus:
+        _log("Bonus suite evaluated", models=len(bonus))
 
     summary = {
         "data_shape": list(df.shape),
@@ -95,6 +140,7 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     save_json(summary, os.path.join(args.out, "summary.json"))
+    _log("Summary saved", path=os.path.join(args.out, "summary.json"))
     return summary
 
 

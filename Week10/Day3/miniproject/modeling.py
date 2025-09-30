@@ -14,6 +14,15 @@ from sklearn.linear_model import LogisticRegression
 from config import RANDOM_STATE
 
 
+def _log(step: str, **details: object) -> None:
+    """Emit structured modeling diagnostics."""
+    if details:
+        formatted = " | ".join(f"{k}={v}" for k, v in details.items())
+        print(f"[MODEL] {step:<26} :: {formatted}")
+    else:
+        print(f"[MODEL] {step}")
+
+
 def build_preprocessor(
         numeric_cols: List[str], categorical_cols: List[str]
 ) -> ColumnTransformer:
@@ -26,10 +35,12 @@ def build_preprocessor(
     Returns:
         A ColumnTransformer suitable for fitting within scikit-learn pipelines.
     """
-    return ColumnTransformer([
+    _log("Building preprocessor", numeric=len(numeric_cols), categorical=len(categorical_cols))
+    transformer = ColumnTransformer([
         ("num", MinMaxScaler(), numeric_cols),
         ("cat", OneHotEncoder(handle_unknown="ignore", drop="first", sparse_output=False), categorical_cols),
     ])
+    return transformer
 
 
 def train_logreg_with_grid(
@@ -54,7 +65,9 @@ def train_logreg_with_grid(
     }
     cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_STATE)
     grid = GridSearchCV(pipe, param_grid, scoring="f1", cv=cv, n_jobs=1, refit=True, verbose=0)
+    _log("Starting GridSearchCV", samples=len(y_train))
     grid.fit(x_train, y_train)
+    _log("Grid search finished", best_score=round(grid.best_score_, 4))
     return grid
 
 
@@ -87,6 +100,12 @@ def evaluate(
         "classification_report": classification_report(y_test, y_pred, output_dict=True, zero_division=0),
     }
     cm = confusion_matrix(y_test, y_pred)
+    _log(
+        "Evaluation metrics computed",
+        accuracy=round(metrics["accuracy"], 4),
+        f1_pos=round(metrics["class1"]["f1"], 4),
+        samples=len(y_test),
+    )
     return metrics, cm
 
 
@@ -116,6 +135,7 @@ def run_bonus_suite(
     """
     svc, k_neighbors_classifier, decision_tree_classifier, random_forest_classifier, gradient_boosting_classifier = _import_bonus()
 
+    _log("Running bonus suite", train=len(y_train), test=len(y_test))
     configs = {
         "SVM": (Pipeline([("pre", preprocessor), ("clf", svc())]), {"clf__C": [0.5, 1.0], "clf__kernel": ["rbf", "linear"]}),
         "KNN": (Pipeline([("pre", preprocessor), ("clf", k_neighbors_classifier())]), {"clf__n_neighbors": [3, 5]}),
@@ -126,6 +146,7 @@ def run_bonus_suite(
     out: Dict[str, Dict[str, Any]] = {}
     cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_STATE)
     for name, (pipe, grid_params) in configs.items():
+        _log("Tuning bonus model", model=name)
         grid = GridSearchCV(pipe, grid_params, scoring="f1", cv=cv, n_jobs=1, refit=True, verbose=0)
         grid.fit(x_train, y_train)
         y_pred = grid.predict(x_test)
@@ -134,4 +155,10 @@ def run_bonus_suite(
             "test_accuracy": float(accuracy_score(y_test, y_pred)),
             "test_f1_pos": float(f1_score(y_test, y_pred, pos_label=1, zero_division=0)),
         }
+        _log(
+            "Bonus model scored",
+            model=name,
+            accuracy=round(out[name]["test_accuracy"], 4),
+            f1_pos=round(out[name]["test_f1_pos"], 4),
+        )
     return out
