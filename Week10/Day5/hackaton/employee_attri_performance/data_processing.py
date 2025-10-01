@@ -18,7 +18,7 @@ def clean_data(df: pd.DataFrame, logger) -> pd.DataFrame:
     after = len(df)
 
     # Retrieving columns with only one unique value
-    constant_columns = [col for col in df.columns if df[col].nunique(dropna=False) <= 1]
+    constant_columns = [col for col in df.columns if df[col].nunique(dropna=False) <= 1] + ["EmployeeNumber"]
     if constant_columns:
         logger.info("Dropping constant columns: %s", constant_columns)
         df = df.drop(columns=constant_columns)
