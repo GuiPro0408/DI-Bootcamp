@@ -1,0 +1,174 @@
+================================================================================
+GRADIENT DESCENT FOR STUDENT EXAM SCORE PREDICTION
+================================================================================
+
+PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+A school wants to predict students' final exam scores based on:
+  • Study Hours (x1): Number of hours studied
+  • Previous Test Score (x2): Score from last test
+
+We will perform ONE step of gradient descent to improve our neural network.
+
+
+================================================================================
+STEP 1: INITIAL SETUP
+================================================================================
+
+Input Data (Sample Student):
+  x1 (Study Hours)      = 5
+  x2 (Previous Score)   = 70
+  y (Actual Exam Score) = 85
+
+Initial Neural Network Parameters:
+  w1 (Weight for x1) = 0.6
+  w2 (Weight for x2) = 0.3
+  b (Bias)           = 10
+
+Learning Rate:
+  α (Alpha) = 0.01
+
+
+================================================================================
+STEP 2: FORWARD PASS (Make Prediction)
+================================================================================
+
+Formula: ŷ = w1·x1 + w2·x2 + b
+
+Calculation:
+  w1 · x1 = 0.6 × 5 = 3.00
+  w2 · x2 = 0.3 × 70 = 21.00
+  Sum     = 3.00 + 21.00 = 24.00
+  Add bias: 24.00 + 10 = 34.00
+
+Prediction: ŷ = 34.00
+Actual:     y = 85
+Error:      y - ŷ = 85 - 34.00 = 51.00
+
+
+================================================================================
+STEP 3: CALCULATE LOSS (Measure Error)
+================================================================================
+
+Formula: L = (1/2)(y - ŷ)²
+
+The factor of 1/2 simplifies gradient calculation.
+
+Calculation:
+  Error         = y - ŷ = 85 - 34.00 = 51.00
+  Squared Error = (51.00)² = 2601.00
+  Loss          = (1/2) × 2601.00 = 1300.5000
+
+Loss: L = 1300.5000
+
+
+================================================================================
+STEP 4: COMPUTE GRADIENTS (Direction to Improve)
+================================================================================
+
+Gradients tell us how to change each parameter to reduce loss.
+Using chain rule from calculus:
+
+Formulas:
+  ∂L/∂w1 = -(y - ŷ) · x1
+  ∂L/∂w2 = -(y - ŷ) · x2
+  ∂L/∂b  = -(y - ŷ)
+
+Calculation:
+  Error         = y - ŷ = 51.00
+  Negative error = -(y - ŷ) = -51.00
+
+  ∂L/∂w1 = -51.00 × 5 = -255.00
+  ∂L/∂w2 = -51.00 × 70 = -3570.00
+  ∂L/∂b  = -51.00
+
+Gradients:
+  ∂L/∂w1 = -255.00
+  ∂L/∂w2 = -3570.00
+  ∂L/∂b  = -51.00
+
+
+================================================================================
+STEP 5: UPDATE PARAMETERS (Learn from Error)
+================================================================================
+
+Formula: θ_new = θ_old - α · ∂L/∂θ
+
+We move parameters in opposite direction of gradient (negative gradient)
+to reduce loss. Learning rate α controls step size.
+
+Calculation:
+  Δw1 = α × ∂L/∂w1 = 0.01 × -255.00 = -2.5500
+  Δw2 = α × ∂L/∂w2 = 0.01 × -3570.00 = -35.7000
+  Δb  = α × ∂L/∂b  = 0.01 × -51.00 = -0.5100
+
+  w1_new = 0.6 - -2.5500 = 3.1500
+  w2_new = 0.3 - -35.7000 = 36.0000
+  b_new  = 10 - -0.5100 = 10.5100
+
+Updated Parameters:
+  w1 = 3.1500  (changed by +2.5500)
+  w2 = 36.0000  (changed by +35.7000)
+  b  = 10.5100  (changed by +0.5100)
+
+
+================================================================================
+STEP 6: VERIFY IMPROVEMENT
+================================================================================
+
+Let's check if the updated parameters give a better prediction:
+
+BEFORE UPDATE:
+  Parameters: w1=0.6, w2=0.3, b=10
+  Prediction: ŷ = 34.00
+  Loss:       L = 1300.5000
+  Error:      |y - ŷ| = |85 - 34.00| = 51.00
+
+AFTER UPDATE:
+  Parameters: w1=3.1500, w2=36.0000, b=10.5100
+  Prediction: ŷ = 2546.26
+  Loss:       L = 3028900.3938
+  Error:      |y - ŷ| = |85 - 2546.26| = 2461.26
+
+IMPROVEMENT:
+  Loss change: -3027599.8938 (increased)
+  Prediction error change: -2410.26
+  Prediction moved further from actual by: 2410.26 points
+
+
+================================================================================
+SUMMARY & OBSERVATIONS
+================================================================================
+
+In this single gradient descent step, we:
+  1. Made a prediction using initial weights and bias
+  2. Calculated how wrong our prediction was (loss)
+  3. Computed gradients showing how to adjust parameters
+  4. Updated parameters by moving opposite to gradient direction
+  5. Verified the result of our parameter update
+
+IMPORTANT OBSERVATIONS:
+
+The gradients were all negative, which means:
+  • Our prediction (34) was too LOW compared to actual (85)
+  • We need to INCREASE the weights and bias
+  • Subtracting negative gradients = adding positive values ✓
+
+After the update, prediction changed from 34.00 to 2546.26.
+
+NOTE: In this example, the prediction actually got worse! This happens because:
+  • The learning rate (0.01) combined with large gradients caused overshooting
+  • Real neural networks normalize/scale input features to prevent this
+  • Multiple small steps work better than one large jump
+  • Feature scaling (e.g., x2/100) would improve convergence
+
+This demonstrates why hyperparameter tuning (learning rate, feature scaling)
+and proper data preprocessing are crucial in machine learning!
+
+In practice, gradient descent would:
+  • Use normalized features (0-1 range or standardized)
+  • Process many examples (batch/mini-batch gradient descent)
+  • Run for many iterations until loss converges
+  • Use techniques like momentum or adaptive learning rates
+
+================================================================================
