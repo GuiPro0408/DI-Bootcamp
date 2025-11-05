@@ -1,0 +1,11 @@
+transformers
+torch
+numpy
+datasets
+nltk
+rouge-score
+schedule
+streamlit
+pillow
+torchvision
+sentence-transformers
